@@ -73,4 +73,9 @@ Route::post('profile/dark-mode', function () {
     return response()->json(['dark_mode' => $user->dark_mode]);
 })->name('profile.dark-mode')->middleware('auth');
 
+// Calendar
+Route::get('calendar', function () {
+    return view('calendar.index');
+})->name('calendar');
+
 require __DIR__.'/auth.php';
