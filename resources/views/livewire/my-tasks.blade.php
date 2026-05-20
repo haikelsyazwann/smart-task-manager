@@ -9,32 +9,38 @@
                    class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg pl-8 pr-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-violet-500">
         </div>
 
-        <select wire:model.live="filterStatus"
-                class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <option value="">All statuses</option>
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="done">Done</option>
-        </select>
+        <div class="relative">
+            <select wire:model.live="filterStatus"
+                    class="appearance-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer text-gray-700 dark:text-gray-300">
+                <option value="">All Statuses</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+            </select>
+        </div>
 
-        <select wire:model.live="filterPriority"
-                class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <option value="">All priorities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-        </select>
+        <div class="relative">
+            <select wire:model.live="filterPriority"
+                    class="appearance-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer text-gray-700 dark:text-gray-300">
+                <option value="">All Priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
 
-        <select wire:model.live="filterProject"
-                class="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-            <option value="">All projects</option>
-            @foreach($projects as $p)
-            <option value="{{ $p->id }}">{{ $p->name }}</option>
-            @endforeach
-        </select>
+        <div class="relative">
+            <select wire:model.live="filterProject"
+                    class="appearance-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer text-gray-700 dark:text-gray-300">
+                <option value="">All Projects</option>
+                @foreach($projects as $p)
+                <option value="{{ $p->id }}">{{ $p->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
         @if($search || $filterStatus || $filterPriority || $filterProject)
-        <button wire:click="$set('search','');$set('filterStatus','');$set('filterPriority','');$set('filterProject','')"
+        <button wire:click="clearFilters"
                 class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             Clear filters
         </button>

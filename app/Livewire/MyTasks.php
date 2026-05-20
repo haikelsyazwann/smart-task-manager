@@ -30,6 +30,15 @@ class MyTasks extends Component
         $this->sortBy  = $col;
     }
 
+    public function clearFilters(): void
+        {
+            $this->search         = '';
+            $this->filterStatus   = '';
+            $this->filterPriority = '';
+            $this->filterProject  = '';
+            $this->resetPage();
+        }
+
     public function render()
     {
         $user = Auth::user();

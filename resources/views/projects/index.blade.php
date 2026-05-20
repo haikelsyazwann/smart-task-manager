@@ -31,11 +31,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             @foreach($projects as $project)
             @php
-                $total    = $project->tasks->count();
-                $done     = $project->tasks->where('status', 'done')->count();
-                $pct      = $total > 0 ? round($done / $total * 100) : 0;
-                $overdue  = $project->tasks->where('status', '!=', 'done')
-                                ->filter(fn($t) => $t->deadline && $t->deadline < now())->count();
+                $total   = $project->tasks->count();
+                $done    = $project->tasks->where('status', 'done')->count();
+                $pct     = $total > 0 ? round($done / $total * 100) : 0;
+                $overdue = $project->tasks->where('status', '!=', 'done')
+                               ->filter(fn($t) => $t->deadline && $t->deadline < now())->count();
             @endphp
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-violet-300 dark:hover:border-violet-700 transition-colors group">
                 <div class="flex items-start justify-between mb-3">
@@ -43,12 +43,18 @@
                         <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:{{ $project->color }}"></span>
                         <h3 class="font-semibold text-sm truncate">{{ $project->name }}</h3>
                     </div>
-                    @can('delete', $project)
-                    <form method="POST" action="{{ route('projects.destroy', $project) }}" onsubmit="return confirm('Delete this project?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition text-xs">✕</button>
-                    </form>
-                    @endcan
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        @can('update', $project)
+                        <button onclick="document.getElementById('edit-project-{{ $project->id }}').showModal()"
+                                class="text-gray-300 hover:text-violet-500 dark:text-gray-600 dark:hover:text-violet-400 transition text-xs">✎</button>
+                        @endcan
+                        @can('delete', $project)
+                        <form method="POST" action="{{ route('projects.destroy', $project) }}" onsubmit="return confirm('Delete this project?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition text-xs">✕</button>
+                        </form>
+                        @endcan
+                    </div>
                 </div>
 
                 <p class="text-xs text-gray-400 dark:text-gray-500 mb-3 line-clamp-2 min-h-[2rem]">
@@ -74,6 +80,44 @@
                     </a>
                 </div>
             </div>
+
+            {{-- Edit Project Modal --}}
+            @can('update', $project)
+            <dialog id="edit-project-{{ $project->id }}" class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-0 w-full max-w-md backdrop:bg-black/40">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+                    <h2 class="font-semibold text-sm text-gray-900 dark:text-gray-100">Edit Project</h2>
+                    <button onclick="document.getElementById('edit-project-{{ $project->id }}').close()" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">✕</button>
+                </div>
+                <form method="POST" action="{{ route('projects.update', $project) }}" class="p-5 space-y-4">
+                    @csrf @method('PATCH')
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Project name *</label>
+                        <input type="text" name="name" required value="{{ old('name', $project->name) }}"
+                            class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Description</label>
+                        <textarea name="description" rows="2"
+                                class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none">{{ old('description', $project->description) }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Color</label>
+                        <input type="color" name="color" value="{{ old('color', $project->color ?? '#8b5cf6') }}"
+                            class="w-full h-9 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg cursor-pointer">
+                    </div>
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="button" onclick="document.getElementById('edit-project-{{ $project->id }}').close()"
+                                class="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-1.5 text-sm bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors font-medium">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </dialog>
+            @endcan
+
             @endforeach
         </div>
         {{ $projects->links() }}
@@ -127,4 +171,5 @@
         </form>
     </dialog>
     @endcan
+
 </x-app-layout>
