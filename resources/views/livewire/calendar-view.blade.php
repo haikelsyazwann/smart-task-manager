@@ -4,6 +4,17 @@
     <div class="flex items-center justify-between mb-6">
         <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $monthLabel }}</h1>
         <div class="flex items-center gap-2">
+            {{-- View toggle --}}
+            <div class="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs font-medium">
+                <button wire:click="setView('month')"
+                        class="px-3 py-1.5 transition-colors {{ $viewMode === 'month' ? 'bg-violet-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                    Month
+                </button>
+                <button wire:click="setView('week')"
+                        class="px-3 py-1.5 transition-colors {{ $viewMode === 'week' ? 'bg-violet-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                    Week
+                </button>
+            </div>
             <button wire:click="prevMonth"
                 class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
@@ -19,14 +30,44 @@
         </div>
     </div>
 
-    {{-- Legend --}}
-    <div class="flex items-center gap-4 mb-4">
-        <span class="text-xs text-gray-400 dark:text-gray-500">Priority:</span>
-        <span class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> High</span>
-        <span class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Medium</span>
-        <span class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> Low</span>
-        <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ml-4"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Done</span>
-    </div>
+    {{-- Legend + Filter --}}
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Priority:</span>
+                <span class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> High</span>
+                <span class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Medium</span>
+                <span class="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> Low</span>
+                <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ml-4"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Done</span>
+            </div>
+            <div class="flex items-center gap-2">
+            <div class="relative">
+                <select wire:model.live="filterProjectId"
+                        class="appearance-none text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-3 pr-8 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
+                    <option value="">All Projects</option>
+                    @foreach($allProjects as $proj)
+                    <option value="{{ $proj->id }}">{{ $proj->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="relative">
+                <select wire:model.live="filterAssigneeId"
+                        class="appearance-none text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 pl-3 pr-8 py-1.5 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer">
+                    <option value="">All Assignees</option>
+                    @foreach($allUsers as $u)
+                    <option value="{{ $u->id }}">{{ $u->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            @if($filterProjectId || $filterAssigneeId)
+            <button wire:click="$set('filterProjectId', null); $set('filterAssigneeId', null)"
+                    class="text-xs text-violet-600 dark:text-violet-400 hover:underline whitespace-nowrap">
+                Clear filters
+            </button>
+            @endif
+        </div>
+        </div>
 
     {{-- Day headers --}}
     <div class="grid grid-cols-7 mb-1">
@@ -38,7 +79,7 @@
     {{-- Calendar grid --}}
     <div class="grid grid-cols-7 flex-1 border-l border-t border-gray-200 dark:border-gray-800">
         @foreach($calendarDays as $day)
-        <div class="border-r border-b border-gray-200 dark:border-gray-800 p-1 min-h-[110px] cursor-pointer
+        <div class="border-r border-b border-gray-200 dark:border-gray-800 p-1 {{ $viewMode === 'week' ? 'min-h-[400px]' : 'min-h-[110px]' }} cursor-pointer
             {{ !$day['isCurrentMonth'] ? 'bg-gray-50 dark:bg-gray-900/50' : ($day['isToday'] ? 'bg-violet-50 dark:bg-violet-950/30' : 'bg-white dark:bg-gray-900') }}"
             wire:click="openCreateModal('{{ $day['date']->format('Y-m-d') }}')">
 

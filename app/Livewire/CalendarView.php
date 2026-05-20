@@ -11,6 +11,9 @@ class CalendarView extends Component
 {
     public int $year;
     public int $month;
+    public ?int $filterProjectId  = null;
+    public ?int $filterAssigneeId = null;
+    public string $viewMode = 'month';
 
     public bool $showCreateModal   = false;
     public string $newTaskTitle    = '';
@@ -37,6 +40,11 @@ class CalendarView extends Component
         $date = Carbon::createFromDate($this->year, $this->month, 1)->addMonth();
         $this->year  = $date->year;
         $this->month = $date->month;
+    }
+
+    public function setView(string $mode): void
+    {
+        $this->viewMode = $mode;
     }
 
     public function openCreateModal(string $date): void
@@ -87,10 +95,20 @@ class CalendarView extends Component
 
         $startOfMonth = Carbon::createFromDate($this->year, $this->month, 1)->startOfMonth();
         $endOfMonth   = $startOfMonth->copy()->endOfMonth();
+        $queryStart   = $this->viewMode === 'week' ? Carbon::today()->startOfWeek(Carbon::SUNDAY) : $startOfMonth;
+        $queryEnd     = $this->viewMode === 'week' ? Carbon::today()->endOfWeek(Carbon::SATURDAY) : $endOfMonth;
 
         $tasksQuery = Task::with(['project', 'assignees'])
             ->whereNotNull('deadline')
-            ->whereBetween('deadline', [$startOfMonth, $endOfMonth]);
+            ->whereBetween('deadline', [$queryStart, $queryEnd]);
+
+        if ($this->filterProjectId) {
+                $tasksQuery->where('project_id', $this->filterProjectId);
+            }
+
+            if ($this->filterAssigneeId) {
+                $tasksQuery->whereHas('assignees', fn($q) => $q->where('users.id', $this->filterAssigneeId));
+            }
 
         if (!$user->hasRole('admin')) {
             $projectIds = $user->teams()->with('projects')->get()
@@ -104,10 +122,16 @@ class CalendarView extends Component
 
         $tasks = $tasksQuery->get()->groupBy(fn($t) => $t->deadline->format('Y-m-d'));
 
-        $firstDay     = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
-        $lastDay      = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
-        $calendarDays = collect();
+        if ($this->viewMode === 'week') {
+            $today     = Carbon::today();
+            $firstDay  = $today->copy()->startOfWeek(Carbon::SUNDAY);
+            $lastDay   = $today->copy()->endOfWeek(Carbon::SATURDAY);
+        } else {
+            $firstDay  = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
+            $lastDay   = $endOfMonth->copy()->endOfWeek(Carbon::SATURDAY);
+        }
 
+        $calendarDays = collect();
         for ($d = $firstDay->copy(); $d->lte($lastDay); $d->addDay()) {
             $calendarDays->push([
                 'date'           => $d->copy(),
@@ -117,9 +141,21 @@ class CalendarView extends Component
             ]);
         }
 
+        $allUsers = $user->hasRole('admin')
+            ? \App\Models\User::orderBy('name')->get(['id','name'])
+            : $user->teams()->with('members')->get()
+                ->pluck('members')->flatten()->unique('id')->sortBy('name')->values();
+
+        $allProjects = $user->hasRole('admin')
+            ? \App\Models\Project::orderBy('name')->get(['id','name'])
+            : $user->teams()->with('projects')->get()
+                ->pluck('projects')->flatten()->unique('id')->sortBy('name')->values();
+
         return view('livewire.calendar-view', [
             'calendarDays' => $calendarDays,
             'monthLabel'   => $startOfMonth->format('F Y'),
+            'allProjects'  => $allProjects,
+            'allUsers'     => $allUsers,
         ]);
     }
 }
